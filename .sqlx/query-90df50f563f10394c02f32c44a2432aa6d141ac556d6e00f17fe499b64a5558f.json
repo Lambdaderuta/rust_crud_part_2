@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE products\n            SET name=coalesce($2, name),\n            color=coalesce($3, color),\n            category=coalesce($4, category),\n            price=coalesce($5, price)\n            WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "90df50f563f10394c02f32c44a2432aa6d141ac556d6e00f17fe499b64a5558f"
+}
