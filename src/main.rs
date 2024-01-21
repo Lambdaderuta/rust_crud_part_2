@@ -8,22 +8,26 @@ mod utils;
 use std::sync::Arc;
 
 use axum::{
+    body::Body,
     http::{
         header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
         HeaderValue, Method,
     },
-    routing::{post, delete, get, put, patch},
-    Router, middleware, body::Body,
+    middleware,
+    routing::{delete, get, patch, post, put},
+    Router,
 };
 use config::Config;
 use controllers::auth::{login, register};
 use dotenv::dotenv;
-use tokio::signal;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use tokio::signal;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::controllers::product::{create_product, get_product_list, update_product, delete_product};
+use crate::controllers::product::{
+    create_product, delete_product, get_product_list, update_product,
+};
 
 pub struct AppState {
     db: Pool<Postgres>,
@@ -33,17 +37,16 @@ pub struct AppState {
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
     tracing_subscriber::registry()
-    .with(
-        tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-            // axum logs rejections from built-in extractors with the `axum::rejection`
-            // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-            "example_tracing_aka_logging=debug,tower_http=debug,axum::rejection=trace".into()
-        }),
-    )
-    .with(tracing_subscriber::fmt::layer())
-    .init();
-    
-    
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                "example_tracing_aka_logging=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     dotenv().ok();
 
     let config = Config::init();
@@ -69,7 +72,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .route("/get_list", get(get_product_list))
         .route("/update", patch(update_product))
         .route("/delete", delete(delete_product))
-        .route_layer(middleware::from_fn_with_state(app_state.clone(), middlewares::auth::auth::<Body>));
+        .route_layer(middleware::from_fn_with_state(
+            app_state.clone(),
+            middlewares::auth::auth::<Body>,
+        ));
 
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:8080".parse::<HeaderValue>().unwrap())
@@ -86,11 +92,11 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     println!("🚀 Server started successfully");
-    
+
     axum::serve(listener, app)
-    .with_graceful_shutdown(shutdown_signal())
-    .await
-    .unwrap();
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
 
     Ok(())
 }

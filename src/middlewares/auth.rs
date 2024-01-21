@@ -1,20 +1,19 @@
 use std::sync::Arc;
 
 use axum::{
+    body::Body,
     extract::State,
     http::{header, Request, StatusCode},
     middleware::Next,
     response::IntoResponse,
-    Json, body::Body,
+    Json,
 };
 
 use axum_extra::extract::cookie::CookieJar;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Serialize;
 
-use crate::{
-    AppState, structs::auth::TokenClaims,
-};
+use crate::{structs::auth::TokenClaims, AppState};
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -44,7 +43,6 @@ pub async fn auth<B>(
                 })
         });
 
-
     let token = token.ok_or_else(|| {
         let json_error = ErrorResponse {
             status: "fail",
@@ -52,7 +50,6 @@ pub async fn auth<B>(
         };
         (StatusCode::UNAUTHORIZED, Json(json_error))
     })?;
-
 
     let _ = decode::<TokenClaims>(
         &token,
@@ -68,6 +65,5 @@ pub async fn auth<B>(
     })?
     .claims;
 
-  
     Ok(next.run(req).await)
 }
