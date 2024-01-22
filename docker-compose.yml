@@ -1,0 +1,52 @@
+# Версия схемы, которую мы используем.
+# Зависит от установленной версии docker
+# https://docs.docker.com/compose/compose-file/
+version: "3"
+# Определяем список сервисов — services
+# Эти сервисы будут частью нашего приложения
+services:
+
+  app: # Имя сервиса
+    build:
+      # Контекст для сборки образа,
+      # в данном случае, текущая директория
+      context: .
+      # Имя Docker-файла из которого будет собран образ
+      dockerfile: Dockerfile
+      # Команда, которая будет выполнена после старта сервиса
+    # command: make start
+    ports: # Проброс портов
+      - "3000:3000"
+    # Перечисляем тома (volumes)
+    # Они будут подключены к файловой системе сервиса
+    # Например, все что находится в . мы увидим в директории /app
+    volumes:
+      # Текущая директория пробрасывается в директорию /app внутри контейнера
+      # Путь внутри контейнера (после двоеточия) обязательно должен быть абсолютным
+      - ".:/app"
+      - "/tmp:/tmp"
+    # Сервис будет запущен, только после старта db
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/backend
+      - JWT_SECRET=my_ultra_secure_secret
+      - JWT_EXPIRED_IN=60m
+      - JWT_MAXAGE=60
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+          cargo install sqlx-cli
+          sqlx migrate run
+          # cargo sqlx prepare
+          cargo build --release
+          ./target/release/rs_crud_testing
+
+  db:
+    # Имя образа. Здесь мы используем базу данных Postgres
+    image: postgres:latest
+
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=backend
