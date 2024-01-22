@@ -10,10 +10,10 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 pub async fn create_product(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateProduct>,
-) -> Result<(), (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     product_service::create_product(payload, state).await?;
 
-    Ok(())
+    Ok(Json({}))
 }
 
 pub async fn get_product_list(
@@ -27,17 +27,17 @@ pub async fn get_product_list(
 pub async fn update_product(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<UpdateProduct>,
-) -> Result<(), (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     product_service::update_product(payload, state).await?;
 
-    Ok(())
+    Ok(Json({}))
 }
 
 pub async fn delete_product(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<ProductDelete>,
-) -> Result<(), (StatusCode, String)> {
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     product_service::delete_product(payload.id, state).await?;
 
-    Ok(())
+    Ok(Json({}))
 }
