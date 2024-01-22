@@ -61,7 +61,10 @@ pub mod product_service {
         Ok(())
     }
 
-    pub async fn delete_product(payload: i32, state: Arc<AppState>) -> Result<(), (StatusCode, String)> {
+    pub async fn delete_product(
+        payload: i32,
+        state: Arc<AppState>,
+    ) -> Result<(), (StatusCode, String)> {
         let _ = sqlx::query!("DELETE FROM products WHERE id = $1", payload)
             .execute(&state.db)
             .await;
